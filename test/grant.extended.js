@@ -131,9 +131,12 @@ describe('Granting with extended grant type', function () {
           req.oauth.client.clientSecret.should.equal('nightworld');
           callback(false, true, { id: 3 });
         },
-        saveAccessToken: function (token, clientId, expires, user, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
+        validateScope: function (scope, client, user, cb) {
+          cb(false, '', false);
+        }
       },
       grants: ['http://custom.com']
     });
@@ -161,9 +164,12 @@ describe('Granting with extended grant type', function () {
         extendedGrant: function (grantType, req, callback) {
           callback(false, true, { id: 3 });
         },
-        saveAccessToken: function (token, clientId, expires, user, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
+        validateScope: function (scope, client, user, cb) {
+          cb(false, '', false);
+        }
       },
       grants: ['urn:custom:grant']
     });

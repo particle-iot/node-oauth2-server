@@ -127,15 +127,36 @@ Note: see https://github.com/thomseddon/node-oauth2-server/tree/master/examples/
  - *boolean* **allowed**
      - Indicates whether the grantType is allowed for this clientId
 
-#### saveAccessToken (accessToken, clientId, expires, user, callback)
+#### saveAccessToken (accessToken, clientId, expires, user, scope, callback)
 - *string* **accessToken**
 - *string* **clientId**
 - *date* **expires**
 - *object* **user**
+- *string* **scope**
 - *function* **callback (error)**
  - *mixed* **error**
      - Truthy to indicate an error
 
+#### authoriseScope (accessToken, scope, callback)
+- *string* **accessToken**
+- *mixed* **scope**
+- *function* **callback (error, invalid)**
+ - *mixed* **error**
+     - Truthy to indicate an error
+ - *boolean|string* **invalid**
+     - Falsey to indicate token possesses required scope; truthy (boolean or string) as invalid scope error message
+
+### validateScope (scope, client, user, callback)
+- *string* **scope**
+- *object* **client**
+- *object* **user**
+- *function* **callback (error, validScope, invalid)**
+ - *mixed* **error**
+     - Truthy to indicate an error
+ - *mixed* **validScope**
+     - Validated/sanitized scope string
+ - *boolean|string* **invalid**
+     - Falsey to indicate solicited scope was granted; truthy (boolean or string) as invalid scope error message
 
 ### Required for `authorization_code` grant type
 
@@ -154,12 +175,13 @@ Note: see https://github.com/thomseddon/node-oauth2-server/tree/master/examples/
          - *string|number* **userId**
              - The userId
 
-#### saveAuthCode (authCode, clientId, expires, user, callback)
+#### saveAuthCode (authCode, clientId, expires, user, scope, callback)
 - *string* **authCode**
 - *string* **clientId**
 - *date* **expires**
 - *mixed* **user**
    - Whatever was passed as `user` to the codeGrant function (see example)
+- *string* **scope**
 - *function* **callback (error)**
  - *mixed* **error**
      - Truthy to indicate an error
@@ -181,11 +203,12 @@ Note: see https://github.com/thomseddon/node-oauth2-server/tree/master/examples/
 
 ### Required for `refresh_token` grant type
 
-#### saveRefreshToken (refreshToken, clientId, expires, user, callback)
+#### saveRefreshToken (refreshToken, clientId, expires, user, scope, callback)
 - *string* **refreshToken**
 - *string* **clientId**
 - *date* **expires**
 - *object* **user**
+- *string* **scope**
 - *function* **callback (error)**
  - *mixed* **error**
      - Truthy to indicate an error
@@ -278,7 +301,7 @@ First you must insert client id/secret and user into storage. This is out of the
 
 To obtain a token you should POST to `/oauth/token`. You should include your client credentials in
 the Authorization header ("Basic " + client_id:client_secret base64'd), and then grant_type ("password"),
-username and password in the request body, for example:
+username, password, and optionally a scope in the request body, for example:
 
 ```
 POST /oauth/token HTTP/1.1
@@ -286,13 +309,13 @@ Host: server.example.com
 Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
 Content-Type: application/x-www-form-urlencoded
 
-grant_type=password&username=johndoe&password=A3ddj3w
+grant_type=password&username=johndoe&password=A3ddj3w&scope=readonly
 ```
 This will then call the following on your model (in this order):
  - getClient (clientId, clientSecret, callback)
  - grantTypeAllowed (clientId, grantType, callback)
  - getUser (username, password, callback)
- - saveAccessToken (accessToken, clientId, expires, user, callback)
+ - saveAccessToken (accessToken, clientId, expires, user, scope, callback)
  - saveRefreshToken (refreshToken, clientId, expires, user, callback) **(if using)**
 
 Provided there weren't any errors, this will return the following (excluding the `refresh_token` if you've not enabled the refresh_token grant type):
@@ -307,7 +330,8 @@ Pragma: no-cache
   "access_token":"2YotnFZFEjr1zCsicMWpAA",
   "token_type":"bearer",
   "expires_in":3600,
-  "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA"
+  "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
+  "scope": "readonly"
 }
 ```
 

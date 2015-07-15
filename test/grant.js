@@ -43,7 +43,8 @@ var validBody = {
   client_id: 'thom',
   client_secret: 'nightworld',
   username: 'thomseddon',
-  password: 'nightworld'
+  password: 'nightworld',
+  scope: 'foobar'
 };
 
 describe('Grant', function() {
@@ -236,9 +237,12 @@ describe('Grant', function() {
           generateToken: function (type, req, callback) {
             callback(false, 'thommy');
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             token.should.equal('thommy');
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password']
@@ -270,9 +274,12 @@ describe('Grant', function() {
             req.user.id.should.equal(1);
             callback(false, 'thommy');
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             token.should.equal('thommy');
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password']
@@ -301,8 +308,11 @@ describe('Grant', function() {
           generateToken: function (type, req, callback) {
             callback(false, { accessToken: 'thommy' });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             cb(new Error('Should not be saving'));
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password']
@@ -330,13 +340,17 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
             clientId.should.equal('thom');
             user.id.should.equal(1);
+			scope.should.equal('foobar');
             (+expires).should.be.within(10, (+new Date()) + 3600000);
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, 'foobar', false);
           }
         },
         grants: ['password']
@@ -362,16 +376,19 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             cb();
           },
-          saveRefreshToken: function (token, clientId, expires, user, cb) {
+          saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
             clientId.should.equal('thom');
             user.id.should.equal(1);
             (+expires).should.be.within(10, (+new Date()) + 1209600000);
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password', 'refresh_token']
@@ -399,8 +416,11 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password']
@@ -439,11 +459,14 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             cb();
           },
-          saveRefreshToken: function (token, clientId, expires, user, cb) {
+          saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password', 'refresh_token']
@@ -473,6 +496,53 @@ describe('Grant', function() {
 
     });
 
+    it('should return an oauth compatible response with scope', function (done) {
+      var app = bootstrap({
+        model: {
+          getClient: function (id, secret, callback) {
+            callback(false, { client_id: 'thom' });
+          },
+          grantTypeAllowed: function (clientId, grantType, callback) {
+            callback(false, true);
+          },
+          getUser: function (uname, pword, callback) {
+            callback(false, { id: 1 });
+          },
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+            cb();
+          },
+          saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
+            cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, 'foobar', false);
+          }
+        },
+        grants: ['password', 'refresh_token']
+      });
+
+      request(app)
+        .post('/oauth/token')
+        .set('Content-Type', 'application/x-www-form-urlencoded')
+        .send({ grant_type: 'password', client_id: 'thom', client_secret: 'nightworld', username: 'thomseddon', password: 'nightworld', scope: 'foobar' })
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+
+          res.body.should.have.keys(['access_token', 'token_type', 'expires_in',
+            'refresh_token', 'scope']);
+          res.body.access_token.should.be.instanceOf(String);
+          res.body.access_token.should.have.length(40);
+          res.body.expires_in.should.equal(3600);
+          res.body.refresh_token.should.be.instanceOf(String);
+          res.body.refresh_token.should.have.length(40);
+          res.body.scope.should.equal('foobar');
+          res.body.token_type.should.equal('bearer');
+
+          done();
+        });
+    });
+
     it('should exclude expires_in if accessTokenLifetime = null', function (done) {
       var app = bootstrap({
         model: {
@@ -485,13 +555,16 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             should.strictEqual(null, expires);
             cb();
           },
-          saveRefreshToken: function (token, clientId, expires, user, cb) {
+          saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
             should.strictEqual(null, expires);
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password', 'refresh_token'],
@@ -519,7 +592,7 @@ describe('Grant', function() {
 
     });
 
-    it('should continue after success response if continueAfterResponse1 = true', function (done) {
+    it('should continue after success response if continueAfterResponse = true', function (done) {
       var app = bootstrap({
         model: {
           getClient: function (id, secret, callback) {
@@ -531,8 +604,11 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
             cb();
+          },
+          validateScope: function (scope, client, user, cb) {
+            cb(null, '', false);
           }
         },
         grants: ['password'],
@@ -556,6 +632,77 @@ describe('Grant', function() {
         });
     });
 
+  });
+
+  describe('saving scope', function () {
+    it('should not allow invalid scopes', function (done) {
+      var app = bootstrap({
+        model: {
+          getClient: function (id, secret, callback) {
+            callback(false, { client_id: 'thom' });
+          },
+          grantTypeAllowed: function (clientId, grantType, callback) {
+            callback(false, true);
+          },
+          getUser: function (uname, pword, callback) {
+            callback(false, { id: 1 });
+          },
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+            token.should.be.instanceOf(String);
+            token.should.have.length(40);
+            clientId.should.equal('thom');
+            user.id.should.equal(1);
+            (+expires).should.be.within(10, (+new Date()) + 3600000);
+            cb();
+          },
+          validateScope: function(scope, client, user, cb) {
+            cb(false, false, true);
+          }
+        },
+        grants: ['password']
+      });
+
+      request(app)
+        .post('/oauth/token')
+        .set('Content-Type', 'application/x-www-form-urlencoded')
+        .send({ grant_type: 'password', client_id: 'thom', client_secret: 'nightworld', username: 'thomseddon', password: 'nightworld', scope: 'foo bar' })
+        .expect(400, /invalid_scope/, done);
+
+    });
+
+    it('should allow valid scopes', function (done) {
+      var app = bootstrap({
+        model: {
+          getClient: function (id, secret, callback) {
+            callback(false, { client_id: 'thom' });
+          },
+          grantTypeAllowed: function (clientId, grantType, callback) {
+            callback(false, true);
+          },
+          getUser: function (uname, pword, callback) {
+            callback(false, { id: 1 });
+          },
+          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+            token.should.be.instanceOf(String);
+            token.should.have.length(40);
+            clientId.should.equal('thom');
+            user.id.should.equal(1);
+            (+expires).should.be.within(10, (+new Date()) + 3600000);
+            cb();
+          },
+          validateScope: function(scope, client, user, cb) {
+            cb(false, 'foo bar', false);
+          }
+        },
+        grants: ['password']
+      });
+
+      request(app)
+        .post('/oauth/token')
+        .set('Content-Type', 'application/x-www-form-urlencoded')
+        .send({ grant_type: 'password', client_id: 'thom', client_secret: 'nightworld', username: 'thomseddon', password: 'nightworld', scope: 'foo bar' })
+        .expect(200, /foo bar/, done);
+    });
   });
 
 });

@@ -171,14 +171,17 @@ describe('Granting with refresh_token grant type', function () {
             userId: '123'
           });
         },
-        saveAccessToken: function (token, clientId, expires, user, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
-        saveRefreshToken: function (token, clientId, expires, user, cb) {
+        saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
         expireRefreshToken: function (refreshToken, callback) {
           callback();
+        },
+        validateScope: function (scope, client, user, cb) {
+          cb(false, '', false);
         }
       },
       grants: ['password', 'refresh_token']
@@ -216,14 +219,17 @@ describe('Granting with refresh_token grant type', function () {
             }
           });
         },
-        saveAccessToken: function (token, clientId, expires, user, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
-        saveRefreshToken: function (token, clientId, expires, user, cb) {
+        saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
         expireRefreshToken: function (refreshToken, callback) {
           callback();
+        },
+        validateScope: function (scope, client, user, cb) {
+          cb(false, '', false);
         }
       },
       grants: ['password', 'refresh_token']
@@ -258,14 +264,17 @@ describe('Granting with refresh_token grant type', function () {
             userId: '123'
           });
         },
-        saveAccessToken: function (token, clientId, expires, user, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
           cb();
         },
-        saveRefreshToken: function (token, clientId, expires, user, cb) {
+        saveRefreshToken: function (token, clientId, expires, scope, user, cb) {
           cb();
         },
         expireRefreshToken: function (refreshToken, callback) {
           callback();
+        },
+        validateScope: function (scope, client, user, cb) {
+          cb(false, '', false);
         }
       },
       grants: ['password', 'refresh_token']
