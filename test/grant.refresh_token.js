@@ -103,7 +103,7 @@ describe('Granting with refresh_token grant type', function () {
           callback(false, true);
         },
         getRefreshToken: function (data, callback) {
-          callback(false, { client_id: 'kate' });
+          callback(false, { clientId: 'kate' });
         }
       },
       grants: ['password', 'refresh_token']

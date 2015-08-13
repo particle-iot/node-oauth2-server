@@ -46,14 +46,14 @@ describe('Granting with client_credentials grant type', function () {
     var app = bootstrap({
       model: {
         getClient: function (id, secret, callback) {
-          callback(false, true);
+          callback(false, { clientId: id });
         },
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);
         },
-        getUserFromClient: function (clientId, clientSecret, callback) {
-          clientId.should.equal('thom');
-          clientSecret.should.equal('nightworld');
+        getUserFromClient: function (client, callback) {
+          client.clientId.should.equal('thom');
+          client.clientSecret.should.equal('nightworld');
           callback(false, false); // Fake invalid user
         }
       },

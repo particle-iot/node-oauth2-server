@@ -21,7 +21,7 @@ var express = require('express'),
 
 var oauth2server = require('../');
 
-var bootstrap = function (options) {
+var bootstrap = function (scope) {
   var app = express();
 
   app.oauth = oauth2server({
@@ -39,7 +39,7 @@ var bootstrap = function (options) {
 
   app.use(bodyParser());
 
-  app.get('/', app.oauth.authorise(), app.oauth.scope(options), function (req, res) {
+  app.get('/', app.oauth.authorise({ scope: scope }), app.oauth.scope(scope), function (req, res) {
     res.send('nightworld');
   });
 

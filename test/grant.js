@@ -332,7 +332,7 @@ describe('Grant', function() {
       var app = bootstrap({
         model: {
           getClient: function (id, secret, callback) {
-            callback(false, { client_id: 'thom' });
+            callback(false, { clientId: 'thom' });
           },
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
@@ -340,12 +340,12 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, client, expires, user, scope, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
-            clientId.should.equal('thom');
+            client.clientId.should.equal('thom');
             user.id.should.equal(1);
-			scope.should.equal('foobar');
+            scope.should.equal('foobar');
             (+expires).should.be.within(10, (+new Date()) + 3600000);
             cb();
           },
@@ -368,7 +368,7 @@ describe('Grant', function() {
       var app = bootstrap({
         model: {
           getClient: function (id, secret, callback) {
-            callback(false, { client_id: 'thom' });
+            callback(false, { clientId: 'thom' });
           },
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
@@ -674,7 +674,7 @@ describe('Grant', function() {
       var app = bootstrap({
         model: {
           getClient: function (id, secret, callback) {
-            callback(false, { client_id: 'thom' });
+            callback(false, { clientId: 'thom' });
           },
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
@@ -682,10 +682,10 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, client, expires, user, scope, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
-            clientId.should.equal('thom');
+            client.clientId.should.equal('thom');
             user.id.should.equal(1);
             (+expires).should.be.within(10, (+new Date()) + 3600000);
             cb();

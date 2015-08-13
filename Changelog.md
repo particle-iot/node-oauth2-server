@@ -1,5 +1,9 @@
 ## Changelog
 
+### 2.5.0
+
+ - Add support for implicit and client_credentials authorization
+
 ### 2.3.0
 
  - Support "state" param for auth_code grant type

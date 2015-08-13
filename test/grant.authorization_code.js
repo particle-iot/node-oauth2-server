@@ -102,7 +102,7 @@ describe('Granting with authorization_code grant type', function () {
           callback(false, true);
         },
         getAuthCode: function (code, callback) {
-          callback(false, { client_id: 'wrong' });
+          callback(false, { clientId: 'wrong' });
         }
       },
       grants: ['authorization_code']
@@ -124,7 +124,7 @@ describe('Granting with authorization_code grant type', function () {
     var app = bootstrap({
       model: {
         getClient: function (id, secret, callback) {
-          callback(false, { client_id: 'thom' });
+          callback(false, { clientId: 'thom' });
         },
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);
@@ -155,7 +155,7 @@ describe('Granting with authorization_code grant type', function () {
     var app = bootstrap({
       model: {
         getClient: function (id, secret, callback) {
-          callback(false, { client_id: 'thom' });
+          callback(false, { clientId: 'thom' });
         },
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);
@@ -187,7 +187,7 @@ describe('Granting with authorization_code grant type', function () {
     var app = bootstrap({
       model: {
         getClient: function (id, secret, callback) {
-          callback(false, { client_id: 'thom' });
+          callback(false, { clientId: 'thom' });
         },
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);

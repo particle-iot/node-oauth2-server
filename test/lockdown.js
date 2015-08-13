@@ -102,14 +102,16 @@ describe('Lockdown pattern', function() {
 
       app.oauth = oauth2server({ model: {} });
       app.routes.get.push({ callbacks: [ privateAction ] });
-      app.routes.get.push({ callbacks: [ app.oauth.bypass, publicAction ] })
+      app.routes.get.push({ callbacks: [ app.oauth.bypass, publicAction ] });
       app.oauth.lockdown(app);
     });
 
     function mockRequest(authoriseFactory) {
       var req = {
         get: function () {},
-        query: { access_token: { expires: null } }
+        query: { access_token: { expires: null } },
+        headers: {},
+        body: {}
       };
       var next = function () {};
 
