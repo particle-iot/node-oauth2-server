@@ -3,6 +3,7 @@
 ### 2.5.0
 
  - Add support for implicit and client_credentials authorization
+ - Add implicit grant type
 
 ### 2.3.0
 
