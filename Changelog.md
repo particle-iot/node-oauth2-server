@@ -1,5 +1,9 @@
 ## Changelog
 
+### 2.5.1
+
+ - Handle nested routers in express 4 for `lockdown`
+
 ### 2.5.0
 
  - Add support for implicit and client_credentials authorization
