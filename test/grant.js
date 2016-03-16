@@ -237,7 +237,7 @@ describe('Grant', function() {
           generateToken: function (type, req, callback) {
             callback(false, 'thommy');
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             token.should.equal('thommy');
             cb();
           },
@@ -274,7 +274,7 @@ describe('Grant', function() {
             req.user.id.should.equal(1);
             callback(false, 'thommy');
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             token.should.equal('thommy');
             cb();
           },
@@ -308,7 +308,7 @@ describe('Grant', function() {
           generateToken: function (type, req, callback) {
             callback(false, { accessToken: 'thommy' });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             cb(new Error('Should not be saving'));
           },
           validateScope: function (scope, client, user, cb) {
@@ -340,7 +340,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, client, expires, user, scope, cb) {
+          saveAccessToken: function (token, client, expires, user, scope, grantType, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
             client.clientId.should.equal('thom');
@@ -376,7 +376,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             cb();
           },
           saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
@@ -416,7 +416,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             cb();
           },
           validateScope: function (scope, client, user, cb) {
@@ -459,7 +459,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             cb();
           },
           saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
@@ -508,7 +508,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             cb();
           },
           saveRefreshToken: function (token, clientId, expires, user, scope, cb) {
@@ -555,7 +555,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             should.strictEqual(null, expires);
             cb();
           },
@@ -604,7 +604,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             cb();
           },
           validateScope: function (scope, client, user, cb) {
@@ -647,7 +647,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+          saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
             clientId.should.equal('thom');
@@ -682,7 +682,7 @@ describe('Grant', function() {
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
-          saveAccessToken: function (token, client, expires, user, scope, cb) {
+          saveAccessToken: function (token, client, expires, user, scope, grantType, cb) {
             token.should.be.instanceOf(String);
             token.should.have.length(40);
             client.clientId.should.equal('thom');

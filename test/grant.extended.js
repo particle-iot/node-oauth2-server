@@ -131,7 +131,7 @@ describe('Granting with extended grant type', function () {
           req.oauth.client.clientSecret.should.equal('nightworld');
           callback(false, true, { id: 3 });
         },
-        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
           cb();
         },
         validateScope: function (scope, client, user, cb) {
@@ -164,7 +164,7 @@ describe('Granting with extended grant type', function () {
         extendedGrant: function (grantType, req, callback) {
           callback(false, true, { id: 3 });
         },
-        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
           cb();
         },
         validateScope: function (scope, client, user, cb) {

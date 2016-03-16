@@ -201,7 +201,7 @@ describe('Granting with authorization_code grant type', function () {
             scope: 'foobar'
           });
         },
-        saveAccessToken: function (token, clientId, expires, user, scope, cb) {
+        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
           cb();
         },
         saveRefreshToken: function (data, cb) {

@@ -37,7 +37,7 @@ describe('ImplicitGrant', function() {
           redirectUri: 'http://nightworld.com'
         });
       },
-      saveAccessToken: function (accessToken, client, expires, user, scope, callback) {
+      saveAccessToken: function (accessToken, client, expires, user, scope, grantType, callback) {
         should.exist(accessToken);
         accessToken.should.have.lengthOf(40);
         client.clientId.should.equal('thom');
@@ -66,7 +66,7 @@ describe('ImplicitGrant', function() {
           redirectUri: 'http://nightworld.com'
         });
       },
-      saveAccessToken: function (accessToken, client, expires, user, scope, callback) {
+      saveAccessToken: function (accessToken, client, expires, user, scope, grantType, callback) {
         should.exist(accessToken);
         token = accessToken;
         callback();
@@ -99,7 +99,7 @@ describe('ImplicitGrant', function() {
           redirectUri: 'http://nightworld.com'
         });
       },
-      saveAccessToken: function (accessToken, client, expires, user, scope, callback) {
+      saveAccessToken: function (accessToken, client, expires, user, scope, grantType, callback) {
         should.exist(accessToken);
         token = accessToken;
         callback();
