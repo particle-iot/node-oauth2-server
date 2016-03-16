@@ -1,5 +1,9 @@
 ## Changelog
 
+### 2.5.3
+
+ - Expose `client` in more auth types
+
 ### 2.5.2
 
  - Pass `grantType` to `saveAccessToken`
