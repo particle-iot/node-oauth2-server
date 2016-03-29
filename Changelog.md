@@ -1,5 +1,11 @@
 ## Changelog
 
+### 2.6.0
+
+ - Allow custom logic for refresh_token lifetime
+ - Do not issue a `refresh_token` if never expiring `access_token`
+ - `refresh_token` lifetime is based on time past the `access_token` lifetime
+
 ### 2.5.3
 
  - Expose `client` in more auth types
