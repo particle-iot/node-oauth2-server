@@ -384,7 +384,7 @@ describe('Grant', function() {
             token.should.have.length(40);
             clientId.should.equal('thom');
             user.id.should.equal(1);
-            (+expires).should.be.within(10, (+new Date()) + 1209600000);
+            (+expires).should.be.within(10, (+new Date()) + 3600000 + 1209600000);
             cb();
           },
           validateScope: function (scope, client, user, cb) {
@@ -580,11 +580,9 @@ describe('Grant', function() {
         .end(function (err, res) {
           if (err) return done(err);
 
-          res.body.should.have.keys(['access_token', 'refresh_token', 'token_type']);
+          res.body.should.have.keys(['access_token', 'token_type']);
           res.body.access_token.should.be.instanceOf(String);
           res.body.access_token.should.have.length(40);
-          res.body.refresh_token.should.be.instanceOf(String);
-          res.body.refresh_token.should.have.length(40);
           res.body.token_type.should.equal('bearer');
 
           done();
