@@ -52,10 +52,7 @@ describe('Error Handler', function() {
       .end(function (err, res) {
         if (err) return done(err);
 
-        res.body.should.have.keys('code', 'error', 'error_description');
-
-        res.body.code.should.be.instanceOf(Number);
-        res.body.code.should.equal(res.statusCode);
+        res.body.should.have.keys('error', 'error_description');
 
         res.body.error.should.be.instanceOf(String);
 
