@@ -159,7 +159,7 @@ describe('AuthCodeGrant', function() {
         client_id: 'thom',
         redirect_uri: 'http://nightworld.com'
       })
-      .expect(302, /Moved temporarily/i, done);
+      .expect(302, /Found. Redirecting/i, done);
   });
 
   it('should accept a valid redirect_uri with a string', function (done) {
@@ -179,7 +179,7 @@ describe('AuthCodeGrant', function() {
         client_id: 'thom',
         redirect_uri: 'http://nightworld.com'
       })
-      .expect(302, /Moved temporarily/i, done);
+      .expect(302, /Found. Redirecting/i, done);
   });
 
   it('should detect user access denied', function (done) {
