@@ -31,11 +31,11 @@ var bootstrap = function (model, params, continueAfterResponse) {
 
   app.use(bodyParser());
 
-  app.post('/authorise', app.oauth.authCodeGrant(function (req, next) {
+  app.post('/authorise', app.oauth.authCodeGrant(function (req, client, next) {
     next.apply(null, params || []);
   }));
 
-  app.get('/authorise', app.oauth.authCodeGrant(function (req, next) {
+  app.get('/authorise', app.oauth.authCodeGrant(function (req, client, next) {
     next.apply(null, params || []);
   }));
 
