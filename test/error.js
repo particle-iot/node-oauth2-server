@@ -78,4 +78,22 @@ describe('OAuth2Error', function() {
     error.message.should.equal('foo');
   });
 
+
+  it('should expose the `mfa_token` when passed in mfa_required', function () {
+      var error = new OAuth2Error('mfa_required', 'mfatokenhere');
+
+      error.mfa_token.should.equal('mfatokenhere');
+  });
+
+  it('should set the message correctly for mfa_required', function () {
+      var error = new OAuth2Error('mfa_required', 'mfatokenhere');
+
+      error.error_description.should.equal('Multi-factor authentication required');
+  });
+
+  it('should set the code correctly for mfa_required', function () {
+      var error = new OAuth2Error('mfa_required', 'mfatokenhere');
+
+      error.code.should.equal(403);
+  });
 });
