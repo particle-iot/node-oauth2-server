@@ -95,4 +95,77 @@ describe('Granting with password grant type', function () {
       .expect(400, /user credentials are invalid/i, done);
 
   });
+
+  it('should detect mfa needed and return an error', function (done) {
+    var app = bootstrap({
+      model: {
+        getClient: function (id, secret, callback) {
+          callback(false, true);
+        },
+        grantTypeAllowed: function (clientId, grantType, callback) {
+          callback(false, true);
+        },
+        getUser: function (uname, pword, callback) {
+          callback(false, { id: 1, mfaEnabled: true });
+        },
+        saveAccessToken: function (token, client, expires, user, scope, grantType, cb) {
+          cb();
+        },
+        validateScope: function(scope, client, user, cb) {
+          cb(false, 'foo bar', false);
+        },
+        saveMfaToken: function(user, accessToken, cb) {
+          cb(false, { mfa_token: '12345678' } );
+        }
+      },
+      grants: ['password']
+    });
+
+    request(app)
+      .post('/oauth/token')
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .send({
+        grant_type: 'password',
+        client_id: 'thom',
+        client_secret: 'nightworld',
+        username: 'thomseddon',
+        password: 'nightworld'
+      })
+      .expect(403, /Multi-factor authentication required/i, done);
+    });
+
+  it('should pass through mfa if not needed', function (done) {
+    var app = bootstrap({
+      model: {
+        getClient: function (id, secret, callback) {
+          callback(false, true);
+        },
+        grantTypeAllowed: function (clientId, grantType, callback) {
+          callback(false, true);
+        },
+        getUser: function (uname, pword, callback) {
+          callback(false, { id: 1, mfaEnabled: false });
+        },
+        saveAccessToken: function (token, client, expires, user, scope, grantType, cb) {
+          cb();
+        },
+        validateScope: function(scope, client, user, cb) {
+          cb(false, 'foo bar', false);
+        },
+      },
+      grants: ['password']
+    });
+
+    request(app)
+      .post('/oauth/token')
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .send({
+        grant_type: 'password',
+        client_id: 'thom',
+        client_secret: 'nightworld',
+        username: 'thomseddon',
+        password: 'nightworld'
+      })
+      .expect(200, /"access_token":"(.*)",(.*)"/i, done);
+  });
 });
