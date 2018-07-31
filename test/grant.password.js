@@ -108,13 +108,10 @@ describe('Granting with password grant type', function () {
         getUser: function (uname, pword, callback) {
           callback(false, { id: 1, mfaEnabled: true });
         },
-        saveAccessToken: function (token, client, expires, user, scope, grantType, cb) {
-          cb();
-        },
         validateScope: function(scope, client, user, cb) {
           cb(false, 'foo bar', false);
         },
-        saveMfaToken: function(user, accessToken, cb) {
+        saveMfaToken: function(user, req, clientId, cb) {
           cb(false, { mfa_token: '12345678' } );
         }
       },
