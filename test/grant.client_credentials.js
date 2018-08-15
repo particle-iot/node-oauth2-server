@@ -80,7 +80,7 @@ it('should bypass the MFA check', function (done) {
       grantTypeAllowed: function (clientId, grantType, callback) {
         callback(false, true);
       },
-			getUserFromClient: function (client, callback) {
+      getUserFromClient: function (client, callback) {
         client.clientId.should.equal('thom');
         client.clientSecret.should.equal('nightworld');
         callback(false, { id: 1, mfaEnabled: true });
