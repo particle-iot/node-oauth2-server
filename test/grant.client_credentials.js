@@ -70,4 +70,39 @@ describe('Granting with client_credentials grant type', function () {
       .expect(400, /client credentials are invalid/i, done);
 
   });
+
+it('should bypass the MFA check', function (done) {
+  var app = bootstrap({
+    model: {
+      getClient: function (id, secret, callback) {
+        callback(false, { clientId: id });
+      },
+      grantTypeAllowed: function (clientId, grantType, callback) {
+        callback(false, true);
+      },
+      getUserFromClient: function (client, callback) {
+        client.clientId.should.equal('thom');
+        client.clientSecret.should.equal('nightworld');
+        callback(false, { id: 1, mfaEnabled: true });
+      },
+      validateScope: function (scope, client, user, cb) {
+        cb(false, '', false);
+      },
+      saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
+        cb();
+      },
+    },
+    grants: ['client_credentials']
+  });
+
+  request(app)
+    .post('/oauth/token')
+    .set('Content-Type', 'application/x-www-form-urlencoded')
+    .send({
+      grant_type: 'client_credentials'
+    })
+    .set('Authorization', 'Basic dGhvbTpuaWdodHdvcmxk')
+    .expect(200, /"access_token":"(.*)",(.*)"/i, done);
+
+  });
 });
