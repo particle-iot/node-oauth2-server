@@ -96,4 +96,10 @@ describe('OAuth2Error', function() {
 
       error.code.should.equal(403);
   });
+
+  it('should expose the right status `code` for rate_limit_exceeded', function () {
+    var error = new OAuth2Error('rate_limit_exceeded');
+
+    error.code.should.equal(429);
+  });
 });
