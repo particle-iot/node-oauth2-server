@@ -180,4 +180,44 @@ describe('Granting with recovery-code grant type', function () {
 			})
 			.expect(200, done);
 	});
+
+  it('should return the rate_limit error', function (done) {
+    var app = bootstrap({
+      model: {
+        getClient: function (id, secret, cb) {
+          cb(false, { clientId: 'thom', clientSecret: 'nightworld' });
+        },
+        grantTypeAllowed: function (clientId, grantType, cb) {
+          cb(false, true);
+        },
+        useMfaOtpGrant: function (grantType, req, cb) {
+          req.oauth.client.clientId.should.equal('thom');
+          req.oauth.client.clientSecret.should.equal('nightworld');
+          cb(false, true, { id: 3 });
+        },
+        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
+          cb();
+        },
+        validateScope: function (scope, client, user, cb) {
+          cb(false, '', false);
+        },
+        performRecoveryCode: function (req, cb) {
+          cb(new OAuth2Error('rate_limit_exceeded', 'Rate limit exceeded.'));
+        }
+      },
+      grants: ['urn:custom:recovery-code']
+    });
+
+    request(app)
+      .post('/oauth/token')
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .send({
+        grant_type: 'urn:custom:recovery-code',
+        client_id: 'thom',
+        client_secret: 'nightworld',
+        mfa_token: '123456',
+        recovery_code: '123456'
+      })
+      .expect(429, /Rate limit exceeded./i, done);
+  });
 });
