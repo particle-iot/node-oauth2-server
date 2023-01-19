@@ -1,5 +1,5 @@
 {
-  "name": "oauth2-server",
+  "name": "@particle/oauth2-server",
   "description": "Complete, compliant and well tested module for implementing an OAuth2 Server/Provider with express in node.js",
   "version": "2.12.3",
   "keywords": [
