@@ -73,6 +73,7 @@ describe('Granting with password grant type', function () {
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);
         },
+        checkSSOUser: function (uname) { return Promise.resolve(); },
         getUser: function (uname, pword, callback) {
           uname.should.equal('thomseddon');
           pword.should.equal('nightworld');
@@ -105,6 +106,7 @@ describe('Granting with password grant type', function () {
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);
         },
+        checkSSOUser: function (uname) { return Promise.resolve(); },
         getUser: function (uname, pword, callback) {
           callback(false, { id: 1, mfaEnabled: true });
         },
@@ -140,6 +142,7 @@ describe('Granting with password grant type', function () {
         grantTypeAllowed: function (clientId, grantType, callback) {
           callback(false, true);
         },
+        checkSSOUser: function (uname) { return Promise.resolve(); },
         getUser: function (uname, pword, callback) {
           callback(false, { id: 1, mfaEnabled: false });
         },
