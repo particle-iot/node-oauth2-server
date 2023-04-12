@@ -197,6 +197,30 @@ describe('Grant', function() {
         .send({ grant_type: 'password', client_id: 'thom', client_secret: 'nightworld' })
         .expect(400, /client credentials are invalid/i, done);
     });
+
+    it('should detect SSO user', function (done) {
+
+      var app = bootstrap({
+        model: {
+          getClient: function (id, secret, callback) {
+            callback(false, true);
+          },
+          grantTypeAllowed: function (clientId, grantType, callback) {
+            callback(false, true);
+          },
+          checkSSOUser: function fakeSSO (uname) {
+            return Promise.reject('User is SSO'); // Fake SSO validation
+          }
+        },
+        grants: ['password']
+      });
+
+      request(app)
+        .post('/oauth/token')
+        .set('Content-Type', 'application/x-www-form-urlencoded')
+        .send(validBody)
+        .expect(403, /User is SSO/i, done);
+    });
   });
 
   describe('check grant type allowed for client (via model)', function () {
@@ -231,6 +255,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -265,6 +290,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -302,6 +328,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -337,6 +364,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -373,6 +401,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -413,6 +442,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -456,6 +486,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -505,6 +536,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -552,6 +584,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -599,6 +632,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -642,6 +676,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },
@@ -677,6 +712,7 @@ describe('Grant', function() {
           grantTypeAllowed: function (clientId, grantType, callback) {
             callback(false, true);
           },
+          checkSSOUser: function (uname) { return Promise.resolve(); },
           getUser: function (uname, pword, callback) {
             callback(false, { id: 1 });
           },

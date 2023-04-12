@@ -189,6 +189,11 @@ Note: see https://github.com/thomseddon/node-oauth2-server/tree/master/examples/
 
 ### Required for `password` grant type
 
+#### checkSSOUser (username, req)
+- *string* **username**
+- *object* **req**
+ - The current express request
+
 #### getUser (username, password, callback)
 - *string* **username**
 - *string* **password**
@@ -314,6 +319,7 @@ grant_type=password&username=johndoe&password=A3ddj3w&scope=readonly
 This will then call the following on your model (in this order):
  - getClient (clientId, clientSecret, callback)
  - grantTypeAllowed (clientId, grantType, callback)
+ - checkSSOUser (username)
  - getUser (username, password, callback)
  - saveAccessToken (accessToken, clientId, expires, user, scope, callback)
  - saveRefreshToken (refreshToken, clientId, expires, user, callback) **(if using)**
