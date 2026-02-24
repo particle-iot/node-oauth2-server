@@ -102,4 +102,10 @@ describe('OAuth2Error', function() {
 
     error.code.should.equal(429);
   });
+
+  it('should expose the right status `code` for demo_read_only', function () {
+    var error = new OAuth2Error('demo_read_only');
+
+    error.code.should.equal(403);
+  });
 });
