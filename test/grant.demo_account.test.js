@@ -54,7 +54,7 @@ function validModel(overrides) {
 
 const minimalModel = {
 	getClient: (id, secret, cb) => {
-		cb(null, true);
+		cb(null, {});
 	},
 	grantTypeAllowed: (clientId, grantType, cb) => {
 		cb(null, true);
@@ -139,7 +139,9 @@ describe('Granting with demo_account grant type', () => {
 
 	it('should not include a refresh_token in the response', async () => {
 		const app = bootstrap(
-			{ ...validModel(), saveRefreshToken: (token, clientId, expires, user, cb) => { cb(); } },
+			{ ...validModel(), saveRefreshToken: (token, clientId, expires, user, cb) => {
+				cb();
+			} },
 			['urn:custom:demo_account', 'refresh_token']
 		);
 

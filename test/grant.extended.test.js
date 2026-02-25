@@ -13,175 +13,175 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
-var express = require('express'),
-  bodyParser = require('body-parser'),
-  request = require('supertest'),
-  should = require('should');
+const express = require('express'),
+	bodyParser = require('body-parser'),
+	request = require('supertest');
 
-var oauth2server = require('../');
+const oauth2server = require('../');
 
-var bootstrap = function (oauthConfig) {
-  var app = express(),
-    oauth = oauth2server(oauthConfig || {
-      model: {},
-      grants: ['password', 'refresh_token']
-    });
+function bootstrap(oauthConfig) {
+	const app = express(),
+		oauth = oauth2server(oauthConfig || {
+			model: {},
+			grants: ['password', 'refresh_token']
+		});
 
-  app.set('json spaces', 0);
-  app.use(bodyParser());
+	app.set('json spaces', 0);
+	app.use(bodyParser());
 
-  app.all('/oauth/token', oauth.grant());
+	app.all('/oauth/token', oauth.grant());
 
-  app.use(oauth.errorHandler());
+	app.use(oauth.errorHandler());
 
-  return app;
-};
+	return app;
+}
 
 describe('Granting with extended grant type', function () {
-  it('should ignore if no extendedGrant method', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        }
-      },
-      grants: ['http://custom.com']
-    });
+	it('should ignore if no extendedGrant method', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				}
+			},
+			grants: ['http://custom.com']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'http://custom.com',
-        client_id: 'thom',
-        client_secret: 'nightworld'
-      })
-      .expect(400, /invalid grant_type/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'http://custom.com',
+				client_id: 'thom',
+				client_secret: 'nightworld'
+			})
+			.expect(400, /invalid grant_type/i, done);
+	});
 
-  it('should still detect unsupported grant_type', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        extendedGrant: function (grantType, req, callback) {
-          callback(false, false);
-        }
-      },
-      grants: ['http://custom.com']
-    });
+	it('should still detect unsupported grant_type', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				extendedGrant: function (grantType, req, callback) {
+					callback(false, false);
+				}
+			},
+			grants: ['http://custom.com']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'http://custom.com',
-        client_id: 'thom',
-        client_secret: 'nightworld'
-      })
-      .expect(400, /invalid grant_type/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'http://custom.com',
+				client_id: 'thom',
+				client_secret: 'nightworld'
+			})
+			.expect(400, /invalid grant_type/i, done);
+	});
 
-  it('should require a user.id', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        extendedGrant: function (grantType, req, callback) {
-          callback(false, true, {}); // Fake empty user
-        }
-      },
-      grants: ['http://custom.com']
-    });
+	it('should require a user.id', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				extendedGrant: function (grantType, req, callback) {
+					callback(false, true, {}); // Fake empty user
+				}
+			},
+			grants: ['http://custom.com']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'http://custom.com',
-        client_id: 'thom',
-        client_secret: 'nightworld'
-      })
-      .expect(400, /invalid request/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'http://custom.com',
+				client_id: 'thom',
+				client_secret: 'nightworld'
+			})
+			.expect(400, /invalid request/i, done);
+	});
 
-  it('should passthrough valid request', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, { clientId: 'thom', clientSecret: 'nightworld' });
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        extendedGrant: function (grantType, req, callback) {
-          req.oauth.client.clientId.should.equal('thom');
-          req.oauth.client.clientSecret.should.equal('nightworld');
-          callback(false, true, { id: 3 });
-        },
-        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
-          cb();
-        },
-        validateScope: function (scope, client, user, cb) {
-          cb(false, '', false);
-        }
-      },
-      grants: ['http://custom.com']
-    });
+	it('should passthrough valid request', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, { clientId: 'thom', clientSecret: 'nightworld' });
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				extendedGrant: function (grantType, req, callback) {
+					req.oauth.client.clientId.should.equal('thom');
+					req.oauth.client.clientSecret.should.equal('nightworld');
+					callback(false, true, { id: 3 });
+				},
+				saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
+					cb();
+				},
+				validateScope: function (scope, client, user, cb) {
+					cb(false, '', false);
+				}
+			},
+			grants: ['http://custom.com']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'http://custom.com',
-        client_id: 'thom',
-        client_secret: 'nightworld'
-      })
-      .expect(200, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'http://custom.com',
+				client_id: 'thom',
+				client_secret: 'nightworld'
+			})
+			.expect(200, done);
+	});
 
-  it('should allow any valid URI valid request', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        extendedGrant: function (grantType, req, callback) {
-          callback(false, true, { id: 3 });
-        },
-        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
-          cb();
-        },
-        validateScope: function (scope, client, user, cb) {
-          cb(false, '', false);
-        }
-      },
-      grants: ['urn:custom:grant']
-    });
+	it('should allow any valid URI valid request', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				extendedGrant: function (grantType, req, callback) {
+					callback(false, true, { id: 3 });
+				},
+				saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
+					cb();
+				},
+				validateScope: function (scope, client, user, cb) {
+					cb(false, '', false);
+				}
+			},
+			grants: ['urn:custom:grant']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'urn:custom:grant',
-        client_id: 'thom',
-        client_secret: 'nightworld'
-      })
-      .expect(200, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'urn:custom:grant',
+				client_id: 'thom',
+				client_secret: 'nightworld'
+			})
+			.expect(200, done);
+	});
 });

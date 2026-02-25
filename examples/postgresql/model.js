@@ -14,150 +14,168 @@
  * limitations under the License.
  */
 
-var pg = require('pg'),
-  model = module.exports,
-  connString = process.env.DATABASE_URL;
+const pg = require('pg'),
+	model = module.exports,
+	connString = process.env.DATABASE_URL;
 
 /*
  * Required
  */
 
 model.getAccessToken = function (bearerToken, callback) {
-  pg.connect(connString, function (err, client, done) {
-    if (err) return callback(err);
-    client.query('SELECT access_token, scope, client_id, expires, user_id FROM oauth_access_tokens ' +
+	pg.connect(connString, function (err, client, done) {
+		if (err) {
+			return callback(err);
+		}
+		client.query('SELECT access_token, scope, client_id, expires, user_id FROM oauth_access_tokens ' +
         'WHERE access_token = $1', [bearerToken], function (err, result) {
-      if (err || !result.rowCount) return callback(err);
-      // This object will be exposed in req.oauth.token
-      // The user_id field will be exposed in req.user (req.user = { id: "..." }) however if
-      // an explicit user object is included (token.user, must include id) it will be exposed
-      // in req.user instead
-      var token = result.rows[0];
-      callback(null, {
-        accessToken: token.access_token,
-        clientId: token.client_id,
-        expires: token.expires,
-        userId: token.userId,
-        scope: token.scope.split(' ') // Assumes a flat, space-delimited scope string
-      });
-      done();
-    });
-  });
+			if (err || !result.rowCount) {
+				return callback(err);
+			}
+			// This object will be exposed in req.oauth.token
+			// The user_id field will be exposed in req.user (req.user = { id: "..." }) however if
+			// an explicit user object is included (token.user, must include id) it will be exposed
+			// in req.user instead
+			const token = result.rows[0];
+			callback(null, {
+				accessToken: token.access_token,
+				clientId: token.client_id,
+				expires: token.expires,
+				userId: token.userId,
+				scope: token.scope.split(' ') // Assumes a flat, space-delimited scope string
+			});
+			done();
+		});
+	});
 };
 
 model.getClient = function (clientId, clientSecret, callback) {
-  pg.connect(connString, function (err, client, done) {
-    if (err) return callback(err);
+	pg.connect(connString, function (err, client, done) {
+		if (err) {
+			return callback(err);
+		}
 
-    client.query('SELECT client_id, client_secret, redirect_uri, valid_scopes, default_scope FROM oauth_clients WHERE ' +
+		client.query('SELECT client_id, client_secret, redirect_uri, valid_scopes, default_scope FROM oauth_clients WHERE ' +
       'client_id = $1', [clientId], function (err, result) {
-      if (err || !result.rowCount) return callback(err);
+			if (err || !result.rowCount) {
+				return callback(err);
+			}
 
-      var client = result.rows[0];
+			const client = result.rows[0];
 
-      if (clientSecret !== null && client.client_secret !== clientSecret) return callback();
+			if (clientSecret !== null && client.client_secret !== clientSecret) {
+				return callback();
+			}
 
-      // This object will be exposed in req.oauth.client
-      callback(null, {
-        clientId: client.client_id,
-        clientSecret: client.client_secret,
-        validScopes: client.valid_scopes,
-        defaultScope: client.default_scope
-      });
-      done();
-    });
-  });
+			// This object will be exposed in req.oauth.client
+			callback(null, {
+				clientId: client.client_id,
+				clientSecret: client.client_secret,
+				validScopes: client.valid_scopes,
+				defaultScope: client.default_scope
+			});
+			done();
+		});
+	});
 };
 
 model.getRefreshToken = function (bearerToken, callback) {
-  pg.connect(connString, function (err, client, done) {
-    if (err) return callback(err);
-    client.query('SELECT refresh_token, scope, client_id, expires, user_id FROM oauth_refresh_tokens ' +
+	pg.connect(connString, function (err, client, done) {
+		if (err) {
+			return callback(err);
+		}
+		client.query('SELECT refresh_token, scope, client_id, expires, user_id FROM oauth_refresh_tokens ' +
       'WHERE refresh_token = $1', [bearerToken], function(err, result) {
 	  callback(err, result.rowCount ? result.rows[0] : false);
-      done();
+			done();
+		});
 	});
-  });
 };
 
 // This will very much depend on your setup, I wouldn't advise doing anything exactly like this but
 // it gives an example of how to use the method to resrict certain grant types
-var authorizedClientIds = ['abc1', 'def2'];
+const authorizedClientIds = ['abc1', 'def2'];
 model.grantTypeAllowed = function (clientId, grantType, callback) {
-  if (grantType === 'password') {
-    return callback(false, authorizedClientIds.indexOf(clientId.toLowerCase()) >= 0);
-  }
+	if (grantType === 'password') {
+		return callback(false, authorizedClientIds.indexOf(clientId.toLowerCase()) >= 0);
+	}
 
-  callback(false, true);
+	callback(false, true);
 };
 
 model.saveAccessToken = function (accessToken, clientId, expires, userId, scope, callback) {
-  pg.connect(connString, function (err, client, done) {
-    if (err) return callback(err);
-    client.query('INSERT INTO oauth_access_tokens(access_token, client_id, user_id, scope, expires) ' +
+	pg.connect(connString, function (err, client, done) {
+		if (err) {
+			return callback(err);
+		}
+		client.query('INSERT INTO oauth_access_tokens(access_token, client_id, user_id, scope, expires) ' +
         'VALUES ($1, $2, $3, $4, $5)', [accessToken, clientId, userId, scope, expires],
-        function (err, result) {
-      callback(err);
-      done();
-    });
-  });
+		function (err, result) {
+			callback(err);
+			done();
+		});
+	});
 };
 
 model.saveRefreshToken = function (refreshToken, clientId, expires, userId, scope, callback) {
-  pg.connect(connString, function (err, client, done) {
-    if (err) return callback(err);
+	pg.connect(connString, function (err, client, done) {
+		if (err) {
+			return callback(err);
+		}
 
-    client.query('INSERT INTO oauth_refresh_tokens(refresh_token, client_id, ' +
+		client.query('INSERT INTO oauth_refresh_tokens(refresh_token, client_id, ' +
         'user_id, scope, expires) VALUES ($1, $2, $3, $4, $5)',
-        [refreshToken, clientId, userId, scope, expires],
-        function (err, result) {
-          callback(err);
-          done();
-        });
-  });
+		[refreshToken, clientId, userId, scope, expires],
+		function (err, result) {
+			callback(err);
+			done();
+		});
+	});
 };
 
 model.authoriseScope = function (accessToken, scope, callback) {
-  var hasScope = accessToken.scope.indexOf(scope) !== -1;
+	const hasScope = accessToken.scope.indexOf(scope) !== -1;
 
-  // You may pass anything from a simple string, as this example illustrates,
-  // to representations including scopes and subscopes such as
-  // { "account": [ "edit" ] }
-  return callback(false, hasScope ? false : 'Missing scope: ' + scope);
+	// You may pass anything from a simple string, as this example illustrates,
+	// to representations including scopes and subscopes such as
+	// { "account": [ "edit" ] }
+	return callback(false, hasScope ? false : 'Missing scope: ' + scope);
 };
 
 model.validateScope = function (scope, client, user, callback) {
-  // Sanitize the requested scope string against a client-specific set of valid scope keys
-  // and the scopes the user actually is allowed to use (if any).
-  // You could choose to strip invalid keys, or return an error message
-  var requestedScope = scope || client.defaultScope || '';
-  var requestedScopes = requestedScope.split(' ');
-  var validScopes = client.validScopes.split(' ');
-  var isValid = !requestedScope || requestedScopes.every(function(key) {
-        return validScopes.indexOf(key) !== -1;
-      });
+	// Sanitize the requested scope string against a client-specific set of valid scope keys
+	// and the scopes the user actually is allowed to use (if any).
+	// You could choose to strip invalid keys, or return an error message
+	let requestedScope = scope || client.defaultScope || '';
+	const requestedScopes = requestedScope.split(' ');
+	const validScopes = client.validScopes.split(' ');
+	const isValid = !requestedScope || requestedScopes.every(function(key) {
+		return validScopes.indexOf(key) !== -1;
+	});
 
-  if (user.allowedScopes) {
-    var userAllowedScopes = user.allowedScopes.split(' ');
-    var userScopes = validScopes.filter(function(key) {
-      return (!scope || requestedScopes.indexOf(key) !== -1) && userAllowedScopes.indexOf(key) !== -1;
-    });
-    requestedScope = userScopes.join(' ');
-  }
+	if (user.allowedScopes) {
+		const userAllowedScopes = user.allowedScopes.split(' ');
+		const userScopes = validScopes.filter(function(key) {
+			return (!scope || requestedScopes.indexOf(key) !== -1) && userAllowedScopes.indexOf(key) !== -1;
+		});
+		requestedScope = userScopes.join(' ');
+	}
 
-  return callback(false, requestedScope, isValid ? false : 'Invalid scope request');
+	return callback(false, requestedScope, isValid ? false : 'Invalid scope request');
 };
 
 /*
  * Required to support password grant type
  */
 model.getUser = function (username, password, callback) {
-  pg.connect(connString, function (err, client, done) {
-    if (err) return callback(err);
-    client.query('SELECT id, allowed_scopes AS allowedScopes FROM users WHERE username = $1 AND password = $2', [username,
-        password], function (err, result) {
-      callback(err, result.rowCount ? result.rows[0] : false);
-      done();
-    });
-  });
+	pg.connect(connString, function (err, client, done) {
+		if (err) {
+			return callback(err);
+		}
+		client.query('SELECT id, allowed_scopes AS allowedScopes FROM users WHERE username = $1 AND password = $2', [username,
+			password], function (err, result) {
+			callback(err, result.rowCount ? result.rows[0] : false);
+			done();
+		});
+	});
 };

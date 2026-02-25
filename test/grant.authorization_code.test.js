@@ -13,220 +13,220 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
-var express = require('express'),
-  bodyParser = require('body-parser'),
-  request = require('supertest'),
-  should = require('should');
+const express = require('express'),
+	bodyParser = require('body-parser'),
+	request = require('supertest');
 
-var oauth2server = require('../');
+const oauth2server = require('../');
 
-var bootstrap = function (oauthConfig) {
-  var app = express(),
-    oauth = oauth2server(oauthConfig || {
-      model: {},
-      grants: ['password', 'refresh_token']
-    });
+function bootstrap(oauthConfig) {
+	const app = express(),
+		oauth = oauth2server(oauthConfig || {
+			model: {},
+			grants: ['password', 'refresh_token']
+		});
 
-  app.set('json spaces', 0);
-  app.use(bodyParser());
+	app.set('json spaces', 0);
+	app.use(bodyParser());
 
-  app.all('/oauth/token', oauth.grant());
+	app.all('/oauth/token', oauth.grant());
 
-  app.use(oauth.errorHandler());
+	app.use(oauth.errorHandler());
 
-  return app;
-};
+	return app;
+}
 
 describe('Granting with authorization_code grant type', function () {
-  it('should detect missing parameters', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        }
-      },
-      grants: ['authorization_code']
-    });
+	it('should detect missing parameters', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				}
+			},
+			grants: ['authorization_code']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'authorization_code',
-        client_id: 'thom',
-        client_secret: 'nightworld'
-      })
-      .expect(400, /no \\"code\\" parameter/i, done);
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'authorization_code',
+				client_id: 'thom',
+				client_secret: 'nightworld'
+			})
+			.expect(400, /no \\"code\\" parameter/i, done);
 
-  });
+	});
 
-  it('should invalid authorization_code', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        getAuthCode: function (code, callback) {
-          callback(false); // Fake invalid
-        }
-      },
-      grants: ['authorization_code']
-    });
+	it('should invalid authorization_code', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getAuthCode: function (code, callback) {
+					callback(false); // Fake invalid
+				}
+			},
+			grants: ['authorization_code']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'authorization_code',
-        client_id: 'thom',
-        client_secret: 'nightworld',
-        code: 'abc123'
-      })
-      .expect(400, /invalid code/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'authorization_code',
+				client_id: 'thom',
+				client_secret: 'nightworld',
+				code: 'abc123'
+			})
+			.expect(400, /invalid code/i, done);
+	});
 
-  it('should detect invalid client_id', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, true);
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        getAuthCode: function (code, callback) {
-          callback(false, { clientId: 'wrong' });
-        }
-      },
-      grants: ['authorization_code']
-    });
+	it('should detect invalid client_id', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, {});
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getAuthCode: function (code, callback) {
+					callback(false, { clientId: 'wrong' });
+				}
+			},
+			grants: ['authorization_code']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'authorization_code',
-        client_id: 'thom',
-        client_secret: 'nightworld',
-        code: 'abc123'
-      })
-      .expect(400, /invalid code/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'authorization_code',
+				client_id: 'thom',
+				client_secret: 'nightworld',
+				code: 'abc123'
+			})
+			.expect(400, /invalid code/i, done);
+	});
 
-  it('should detect expired code', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, { clientId: 'thom' });
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        getAuthCode: function (data, callback) {
-          callback(false, {
-            clientId: 'thom',
-            expires: new Date(+new Date() - 60)
-          });
-        }
-      },
-      grants: ['authorization_code']
-    });
+	it('should detect expired code', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, { clientId: 'thom' });
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getAuthCode: function (data, callback) {
+					callback(false, {
+						clientId: 'thom',
+						expires: new Date(+new Date() - 60)
+					});
+				}
+			},
+			grants: ['authorization_code']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'authorization_code',
-        client_id: 'thom',
-        client_secret: 'nightworld',
-        code: 'abc123'
-      })
-      .expect(400, /code has expired/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'authorization_code',
+				client_id: 'thom',
+				client_secret: 'nightworld',
+				code: 'abc123'
+			})
+			.expect(400, /code has expired/i, done);
+	});
 
-  it('should require code expiration', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, { clientId: 'thom' });
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        getAuthCode: function (data, callback) {
-          callback(false, {
-            clientId: 'thom',
-            expires: null // This is invalid
-          });
-        }
-      },
-      grants: ['authorization_code']
-    });
+	it('should require code expiration', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, { clientId: 'thom' });
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getAuthCode: function (data, callback) {
+					callback(false, {
+						clientId: 'thom',
+						expires: null // This is invalid
+					});
+				}
+			},
+			grants: ['authorization_code']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'authorization_code',
-        client_id: 'thom',
-        client_secret: 'nightworld',
-        code: 'abc123'
-      })
-      .expect(400, /code has expired/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'authorization_code',
+				client_id: 'thom',
+				client_secret: 'nightworld',
+				code: 'abc123'
+			})
+			.expect(400, /code has expired/i, done);
+	});
 
 
-  it('should allow valid request', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, { clientId: 'thom' });
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        getAuthCode: function (refreshToken, callback) {
-          refreshToken.should.equal('abc123');
-          callback(false, {
-            clientId: 'thom',
-            expires: new Date(),
-            userId: '123',
-            scope: 'foobar'
-          });
-        },
-        saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
-          cb();
-        },
-        saveRefreshToken: function (data, cb) {
-          cb();
-        },
-        expireRefreshToken: function (refreshToken, callback) {
-          callback();
-        },
-        validateScope: function (scope, client, user, cb) {
-          cb(null, 'foobar', false);
-        }
-      },
-      grants: ['authorization_code']
-    });
+	it('should allow valid request', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, { clientId: 'thom' });
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getAuthCode: function (refreshToken, callback) {
+					refreshToken.should.equal('abc123');
+					callback(false, {
+						clientId: 'thom',
+						expires: new Date(),
+						userId: '123',
+						scope: 'foobar'
+					});
+				},
+				saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
+					cb();
+				},
+				saveRefreshToken: function (data, cb) {
+					cb();
+				},
+				expireRefreshToken: function (refreshToken, callback) {
+					callback();
+				},
+				validateScope: function (scope, client, user, cb) {
+					cb(null, 'foobar', false);
+				}
+			},
+			grants: ['authorization_code']
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'authorization_code',
-        client_id: 'thom',
-        client_secret: 'nightworld',
-        code: 'abc123'
-      })
-      .expect(200, /"access_token":"(.*)"/i, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'authorization_code',
+				client_id: 'thom',
+				client_secret: 'nightworld',
+				code: 'abc123'
+			})
+			.expect(200, /"access_token":"(.*)"/i, done);
+	});
 
 });

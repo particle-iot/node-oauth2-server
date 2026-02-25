@@ -13,96 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
-var express = require('express'),
-  bodyParser = require('body-parser'),
-  request = require('supertest'),
-  should = require('should');
+const express = require('express'),
+	bodyParser = require('body-parser'),
+	request = require('supertest');
 
-var oauth2server = require('../');
+const oauth2server = require('../');
 
-var bootstrap = function (oauthConfig) {
-  var app = express(),
-    oauth = oauth2server(oauthConfig || {
-      model: {},
-      grants: ['client_credentials']
-    });
+function bootstrap(oauthConfig) {
+	const app = express(),
+		oauth = oauth2server(oauthConfig || {
+			model: {},
+			grants: ['client_credentials']
+		});
 
-  app.set('json spaces', 0);
-  app.use(bodyParser());
+	app.set('json spaces', 0);
+	app.use(bodyParser());
 
-  app.all('/oauth/token', oauth.grant());
+	app.all('/oauth/token', oauth.grant());
 
-  app.use(oauth.errorHandler());
+	app.use(oauth.errorHandler());
 
-  return app;
-};
+	return app;
+}
 
 describe('Granting with client_credentials grant type', function () {
+	// N.B. Client is authenticated earlier in request
+	it('should detect invalid user', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, { clientId: id });
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getUserFromClient: function (client, callback) {
+					client.clientId.should.equal('thom');
+					client.clientSecret.should.equal('nightworld');
+					callback(false, false); // Fake invalid user
+				}
+			},
+			grants: ['client_credentials']
+		});
 
-  // N.B. Client is authenticated earlier in request
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'client_credentials'
+			})
+			.set('Authorization', 'Basic dGhvbTpuaWdodHdvcmxk')
+			.expect(400, /client credentials are invalid/i, done);
 
-  it('should detect invalid user', function (done) {
-    var app = bootstrap({
-      model: {
-        getClient: function (id, secret, callback) {
-          callback(false, { clientId: id });
-        },
-        grantTypeAllowed: function (clientId, grantType, callback) {
-          callback(false, true);
-        },
-        getUserFromClient: function (client, callback) {
-          client.clientId.should.equal('thom');
-          client.clientSecret.should.equal('nightworld');
-          callback(false, false); // Fake invalid user
-        }
-      },
-      grants: ['client_credentials']
-    });
+	});
 
-    request(app)
-      .post('/oauth/token')
-      .set('Content-Type', 'application/x-www-form-urlencoded')
-      .send({
-        grant_type: 'client_credentials'
-      })
-      .set('Authorization', 'Basic dGhvbTpuaWdodHdvcmxk')
-      .expect(400, /client credentials are invalid/i, done);
+	it('should bypass the MFA check', function (done) {
+		const app = bootstrap({
+			model: {
+				getClient: function (id, secret, callback) {
+					callback(false, { clientId: id });
+				},
+				grantTypeAllowed: function (clientId, grantType, callback) {
+					callback(false, true);
+				},
+				getUserFromClient: function (client, callback) {
+					client.clientId.should.equal('thom');
+					client.clientSecret.should.equal('nightworld');
+					callback(false, { id: 1, mfaEnabled: true });
+				},
+				validateScope: function (scope, client, user, cb) {
+					cb(false, '', false);
+				},
+				saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
+					cb();
+				},
+			},
+			grants: ['client_credentials']
+		});
 
-  });
+		request(app)
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send({
+				grant_type: 'client_credentials'
+			})
+			.set('Authorization', 'Basic dGhvbTpuaWdodHdvcmxk')
+			.expect(200, /"access_token":"(.*)",(.*)"/i, done);
 
-it('should bypass the MFA check', function (done) {
-  var app = bootstrap({
-    model: {
-      getClient: function (id, secret, callback) {
-        callback(false, { clientId: id });
-      },
-      grantTypeAllowed: function (clientId, grantType, callback) {
-        callback(false, true);
-      },
-      getUserFromClient: function (client, callback) {
-        client.clientId.should.equal('thom');
-        client.clientSecret.should.equal('nightworld');
-        callback(false, { id: 1, mfaEnabled: true });
-      },
-      validateScope: function (scope, client, user, cb) {
-        cb(false, '', false);
-      },
-      saveAccessToken: function (token, clientId, expires, user, scope, grantType, cb) {
-        cb();
-      },
-    },
-    grants: ['client_credentials']
-  });
-
-  request(app)
-    .post('/oauth/token')
-    .set('Content-Type', 'application/x-www-form-urlencoded')
-    .send({
-      grant_type: 'client_credentials'
-    })
-    .set('Authorization', 'Basic dGhvbTpuaWdodHdvcmxk')
-    .expect(200, /"access_token":"(.*)",(.*)"/i, done);
-
-  });
+	});
 });

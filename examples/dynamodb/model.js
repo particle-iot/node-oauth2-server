@@ -14,128 +14,138 @@
  * limitations under the License.
  */
 
-var dal = require('./dal.js');
+'use strict';
+
+const dal = require('./dal.js');
 model = module.exports;
 
-var OAuthAccessTokenTable = "oauth2accesstoken";
-var OAuthAuthCodeTable = "oauth2authcode";
-var OAuthRefreshTokenTable = "oauth2refreshtoken";
-var OAuthClientTable = "oauth2client";
-var OAuthUserTable = "userid_map";
+const OAuthAccessTokenTable = 'oauth2accesstoken';
+const OAuthAuthCodeTable = 'oauth2authcode';
+const OAuthRefreshTokenTable = 'oauth2refreshtoken';
+const OAuthClientTable = 'oauth2client';
+const OAuthUserTable = 'userid_map';
 
 //
 // oauth2-server callbacks
 //
 model.getAccessToken = function (bearerToken, callback) {
-  console.log('in getAccessToken (bearerToken: ' + bearerToken + ')');
+	console.log('in getAccessToken (bearerToken: ' + bearerToken + ')');
 
-  dal.doGet(OAuthAccessTokenTable,
-    {"accessToken": {"S": bearerToken}}, true, function(err, data) {
-      if (data && data.expires) {
-        data.expires = new Date(data.expires * 1000);
-      }
-      callback(err, data);
-    });
+	dal.doGet(OAuthAccessTokenTable,
+		{ 'accessToken': { 'S': bearerToken } }, true, function(err, data) {
+			if (data && data.expires) {
+				data.expires = new Date(data.expires * 1000);
+			}
+			callback(err, data);
+		});
 };
 
 model.getClient = function (clientId, clientSecret, callback) {
-  console.log('in getClient (clientId: ' + clientId + ', clientSecret: ' + clientSecret + ')');
-  dal.doGet(OAuthClientTable, { clientId: { S: clientId }}, true,
-      function(err, data) {
-    if (err || !data) return callback(err, data);
+	console.log('in getClient (clientId: ' + clientId + ', clientSecret: ' + clientSecret + ')');
+	dal.doGet(OAuthClientTable, { clientId: { S: clientId } }, true,
+		function(err, data) {
+			if (err || !data) {
+				return callback(err, data);
+			}
 
-    if (clientSecret !== null && data.clientSecret !== clientSecret) {
-      return callback();
-    }
+			if (clientSecret !== null && data.clientSecret !== clientSecret) {
+				return callback();
+			}
 
-    callback(null, data);
-  });
+			callback(null, data);
+		});
 };
 
 // This will very much depend on your setup, I wouldn't advise doing anything exactly like this but
 // it gives an example of how to use the method to restrict certain grant types
-var authorizedClientIds = ['abc1', 'def2'];
+const authorizedClientIds = ['abc1', 'def2'];
 model.grantTypeAllowed = function (clientId, grantType, callback) {
-  console.log('in grantTypeAllowed (clientId: ' + clientId + ', grantType: ' + grantType + ')');
+	console.log('in grantTypeAllowed (clientId: ' + clientId + ', grantType: ' + grantType + ')');
 
-  if (grantType === 'password') {
-    return callback(false, authorizedClientIds.indexOf(clientId) >= 0);
-  }
+	if (grantType === 'password') {
+		return callback(false, authorizedClientIds.indexOf(clientId) >= 0);
+	}
 
-  callback(false, true);
+	callback(false, true);
 };
 
 model.saveAccessToken = function (accessToken, clientId, expires, user, callback) {
-  console.log('in saveAccessToken (accessToken: ' + accessToken + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
+	console.log('in saveAccessToken (accessToken: ' + accessToken + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
 
-  var token = {
-    accessToken: accessToken,
-    clientId: clientId,
-    userId: user.id
-  };
+	const token = {
+		accessToken: accessToken,
+		clientId: clientId,
+		userId: user.id
+	};
 
-  if (expires) token.expires = parseInt(expires / 1000, 10);
-  console.log('saving', token);
+	if (expires) {
+		token.expires = parseInt(expires / 1000, 10);
+	}
+	console.log('saving', token);
 
-  dal.doSet(token, OAuthAccessTokenTable, { accessToken: { S: accessToken }}, callback);
+	dal.doSet(token, OAuthAccessTokenTable, { accessToken: { S: accessToken } }, callback);
 };
 
 model.saveRefreshToken = function (refreshToken, clientId, expires, user, callback) {
-  console.log('in saveRefreshToken (refreshToken: ' + refreshToken + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
+	console.log('in saveRefreshToken (refreshToken: ' + refreshToken + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
 
-  var token = {
-    refreshToken: refreshToken,
-    clientId: clientId,
-    userId: user.id
-  };
+	const token = {
+		refreshToken: refreshToken,
+		clientId: clientId,
+		userId: user.id
+	};
 
-  if (expires) token.expires = parseInt(expires / 1000, 10);
-  console.log('saving', token);
+	if (expires) {
+		token.expires = parseInt(expires / 1000, 10);
+	}
+	console.log('saving', token);
 
-  dal.doSet(token, OAuthRefreshTokenTable, { refreshToken: { S: refreshToken }}, callback);
+	dal.doSet(token, OAuthRefreshTokenTable, { refreshToken: { S: refreshToken } }, callback);
 };
 
 model.getRefreshToken = function (bearerToken, callback) {
-  console.log("in getRefreshToken (bearerToken: " + bearerToken + ")");
+	console.log('in getRefreshToken (bearerToken: ' + bearerToken + ')');
 
-  dal.doGet(OAuthRefreshTokenTable, { refreshToken: { S: bearerToken }}, true, function(err, data) {
-      if (data && data.expires) {
-        data.expires = new Date(data.expires * 1000);
-      }
-      callback(err, data);
-    });
+	dal.doGet(OAuthRefreshTokenTable, { refreshToken: { S: bearerToken } }, true, function(err, data) {
+		if (data && data.expires) {
+			data.expires = new Date(data.expires * 1000);
+		}
+		callback(err, data);
+	});
 };
 
 model.revokeRefreshToken = function(bearerToken, callback) {
-  console.log("in revokeRefreshToken (bearerToken: " + bearerToken + ")");
+	console.log('in revokeRefreshToken (bearerToken: ' + bearerToken + ')');
 
-  dal.doDelete(OAuthRefreshTokenTable, { refreshToken: { S: bearerToken }}, callback);
+	dal.doDelete(OAuthRefreshTokenTable, { refreshToken: { S: bearerToken } }, callback);
 };
 
 model.getAuthCode = function (bearerCode, callback) {
-  console.log("in getAuthCode (bearerCode: " + bearerCode + ")");
+	console.log('in getAuthCode (bearerCode: ' + bearerCode + ')');
 
-  dal.doGet(OAuthAuthCodeTable, { authCode: { S: bearerCode }}, true, function(err, data) {
-      if (data && data.expires) {
-        data.expires = new Date(data.expires * 1000);
-      }
-      callback(err, data);
-    });
+	dal.doGet(OAuthAuthCodeTable, { authCode: { S: bearerCode } }, true, function(err, data) {
+		if (data && data.expires) {
+			data.expires = new Date(data.expires * 1000);
+		}
+		callback(err, data);
+	});
 };
 
 model.saveAuthCode = function (authCode, clientId, expires, user, callback) {
-  console.log('in saveAuthCode (authCode: ' + authCode + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
+	console.log('in saveAuthCode (authCode: ' + authCode + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
 
-  var code = {
-    authCode: authCode,
-    clientId: clientId,
-    userId: user.id
-  };
+	const code = {
+		authCode: authCode,
+		clientId: clientId,
+		userId: user.id
+	};
 
-  if (expires) code.expires = parseInt(expires / 1000, 10);
-  console.log("saving", code);
+	if (expires) {
+		code.expires = parseInt(expires / 1000, 10);
+	}
+	console.log('saving', code);
 
-  dal.doSet(code, OAuthAuthCodeTable, { authCode: { S: authCode }}, callback);
+	dal.doSet(code, OAuthAuthCodeTable, { authCode: { S: authCode } }, callback);
 };
 
 
@@ -143,10 +153,12 @@ model.saveAuthCode = function (authCode, clientId, expires, user, callback) {
  * Required to support password grant type
  */
 model.getUser = function (username, password, callback) {
-  console.log('in getUser (username: ' + username + ', password: ' + password + ')');
+	console.log('in getUser (username: ' + username + ', password: ' + password + ')');
 
-  dal.doGet(OAuthUserTable, { id: { S: "email:" + username}}, true, function(err, data) {
-      if (err) return callback(err);
-      callback(null, { id: data.userId });
-    });
+	dal.doGet(OAuthUserTable, { id: { S: 'email:' + username } }, true, function(err, data) {
+		if (err) {
+			return callback(err);
+		}
+		callback(null, { id: data.userId });
+	});
 };

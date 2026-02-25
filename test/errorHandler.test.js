@@ -13,74 +13,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
-var express = require('express'),
-  bodyParser = require('body-parser'),
-  request = require('supertest'),
-  should = require('should');
+const express = require('express'),
+	bodyParser = require('body-parser'),
+	request = require('supertest');
 
-var oauth2server = require('../');
+const oauth2server = require('../');
 
-var bootstrap = function (oauthConfig) {
-  var app = express(),
-    oauth = oauth2server(oauthConfig || { model: {} });
+function bootstrap(oauthConfig) {
+	const app = express(),
+		oauth = oauth2server(oauthConfig || { model: {} });
 
-  app.use(bodyParser());
+	app.use(bodyParser());
 
-  app.all('/oauth/token', oauth.grant());
-  app.all('/', oauth.authorise(), function (req, res) {
-    res.send('Hello World');
-  });
+	app.all('/oauth/token', oauth.grant());
+	app.all('/', oauth.authorise(), function (req, res) {
+		res.send('Hello World');
+	});
 
-  app.use(oauth.errorHandler());
-  if (oauthConfig && oauthConfig.passthroughErrors) {
-    app.use(function (err, req, res, next) {
-      res.send('passthrough');
-    });
-  }
+	app.use(oauth.errorHandler());
+	if (oauthConfig && oauthConfig.passthroughErrors) {
+		app.use((_err, _req, res, _next) => {
+			res.send('passthrough');
+		});
+	}
 
-  return app;
-};
+	return app;
+}
 
-describe('Error Handler', function() {
-  it('should return an oauth conformat response', function (done) {
-    var app = bootstrap();
+describe('Error Handler', function () {
+	it('should return an oauth conformat response', function (done) {
+		const app = bootstrap();
 
-    request(app)
-      .get('/')
-      .expect(400)
-      .end(function (err, res) {
-        if (err) return done(err);
+		request(app)
+			.get('/')
+			.expect(400)
+			.end(function (err, res) {
+				if (err) {
+					return done(err);
+				}
 
-        res.body.should.have.keys('error', 'error_description');
+				res.body.should.have.keys('error', 'error_description');
 
-        res.body.error.should.be.instanceOf(String);
+				res.body.error.should.be.instanceOf(String);
 
-        res.body.error_description.should.be.instanceOf(String);
+				res.body.error_description.should.be.instanceOf(String);
 
-        done();
-      });
-  });
+				done();
+			});
+	});
 
-  it('should passthrough authorise errors', function (done) {
-    var app = bootstrap({
-      passthroughErrors: true,
-      model: {}
-    });
+	it('should passthrough authorise errors', function (done) {
+		const app = bootstrap({
+			passthroughErrors: true,
+			model: {}
+		});
 
-    request(app)
-      .get('/')
-      .expect(200, /^passthrough$/, done);
-  });
+		request(app)
+			.get('/')
+			.expect(200, /^passthrough$/, done);
+	});
 
-  it('should passthrough grant errors', function (done) {
-    var app = bootstrap({
-      passthroughErrors: true,
-      model: {}
-    });
+	it('should passthrough grant errors', function (done) {
+		const app = bootstrap({
+			passthroughErrors: true,
+			model: {}
+		});
 
-    request(app)
-      .post('/oauth/token')
-      .expect(200, /^passthrough$/, done);
-  });
+		request(app)
+			.post('/oauth/token')
+			.expect(200, /^passthrough$/, done);
+	});
 });
