@@ -25,7 +25,7 @@
     "basic-auth": "~0.0.1"
   },
   "devDependencies": {
-    "body-parser": "^1.18.2",
+    "body-parser": "^1.20.4",
     "eslint": "^9.39.3",
     "eslint-config-particle": "^3.0.3",
     "expect": "^30.2.0",
