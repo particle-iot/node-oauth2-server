@@ -163,4 +163,14 @@ describe('Granting with demo_account grant type', () => {
 		expect(res.body.expires_in).toBe(900);
 	});
 
+	it('should include an expires_at ISO string in the response', async () => {
+		const res = await request(bootstrap(validModel()))
+			.post('/oauth/token')
+			.set('Content-Type', 'application/x-www-form-urlencoded')
+			.send(validBody);
+
+		expect(res.status).toBe(200);
+		expect(typeof res.body.expires_at).toBe('string');
+		expect(new Date(res.body.expires_at).toISOString()).toBe(res.body.expires_at);
+	});
 });
