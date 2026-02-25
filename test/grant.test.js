@@ -481,7 +481,7 @@ describe('Grant', function() {
 						return done(err);
 					}
 
-					res.body.should.have.keys(['access_token', 'token_type', 'expires_in']);
+					res.body.should.have.keys('access_token', 'token_type', 'expires_in');
 					res.body.access_token.should.be.instanceOf(String);
 					res.body.access_token.should.have.length(40);
 					res.body.token_type.should.equal('bearer');
@@ -532,8 +532,7 @@ describe('Grant', function() {
 						return done(err);
 					}
 
-					res.body.should.have.keys(['access_token', 'token_type', 'expires_in',
-						'refresh_token']);
+					res.body.should.have.keys('access_token', 'token_type', 'expires_in', 'refresh_token');
 					res.body.access_token.should.be.instanceOf(String);
 					res.body.access_token.should.have.length(40);
 					res.body.refresh_token.should.be.instanceOf(String);
@@ -584,8 +583,7 @@ describe('Grant', function() {
 						return done(err);
 					}
 
-					res.body.should.have.keys(['access_token', 'token_type', 'expires_in',
-						'refresh_token', 'scope']);
+					res.body.should.have.keys('access_token', 'token_type', 'expires_in', 'refresh_token', 'scope');
 					res.body.access_token.should.be.instanceOf(String);
 					res.body.access_token.should.have.length(40);
 					res.body.expires_in.should.equal(3600);
@@ -640,7 +638,7 @@ describe('Grant', function() {
 						return done(err);
 					}
 
-					res.body.should.have.keys(['access_token', 'token_type']);
+					res.body.should.have.keys('access_token', 'token_type');
 					res.body.access_token.should.be.instanceOf(String);
 					res.body.access_token.should.have.length(40);
 					res.body.token_type.should.equal('bearer');
