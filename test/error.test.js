@@ -1,111 +1,110 @@
-var should = require('should');
+'use strict';
 
-var OAuth2Error = require('../lib/error');
+const OAuth2Error = require('../lib/error');
 
 describe('OAuth2Error', function() {
+	it('should be an instance of `Error`', function () {
+		const error = new OAuth2Error('invalid_request', 'The access token was not found');
 
-  it('should be an instance of `Error`', function () {
-    var error = new OAuth2Error('invalid_request', 'The access token was not found');
+		error.should.be.instanceOf(Error);
+	});
 
-    error.should.be.instanceOf(Error);
-  });
+	it('should expose the `message` as the description', function () {
+		const error = new OAuth2Error('invalid_request', 'The access token was not found');
 
-  it('should expose the `message` as the description', function () {
-    var error = new OAuth2Error('invalid_request', 'The access token was not found');
+		error.message.should.equal('The access token was not found');
+	});
 
-    error.message.should.equal('The access token was not found');
-  });
+	it('should expose the `stack`', function () {
+		const error = new OAuth2Error('invalid_request', 'The access token was not found');
 
-  it('should expose the `stack`', function () {
-    var error = new OAuth2Error('invalid_request', 'The access token was not found');
+		error.stack.should.not.equal(undefined);
+	});
 
-    error.stack.should.not.equal(undefined);
-  });
+	it('should expose a custom `name`', function () {
+		const error = new OAuth2Error();
 
-  it('should expose a custom `name`', function () {
-    var error = new OAuth2Error();
+		error.name.should.equal('OAuth2Error');
+	});
 
-    error.name.should.equal('OAuth2Error');
-  });
+	it('should set cache `headers`', function () {
+		const error = new OAuth2Error('invalid_request');
 
-  it('should set cache `headers`', function () {
-    var error = new OAuth2Error('invalid_request');
+		error.headers.should.eql({
+			'Cache-Control': 'no-store',
+			'Pragma': 'no-cache'
+		});
+	});
 
-    error.headers.should.eql({
-      'Cache-Control': 'no-store',
-      'Pragma': 'no-cache'
-    });
-  });
+	it('should include WWW-Authenticate `header` if error is `invalid_client`', function () {
+		const error = new OAuth2Error('invalid_client');
 
-  it('should include WWW-Authenticate `header` if error is `invalid_client`', function () {
-    var error = new OAuth2Error('invalid_client');
+		error.headers.should.eql({
+			'Cache-Control': 'no-store',
+			'Pragma': 'no-cache',
+			'WWW-Authenticate': 'Basic realm="Service"'
+		});
+	});
 
-    error.headers.should.eql({
-      'Cache-Control': 'no-store',
-      'Pragma': 'no-cache',
-      'WWW-Authenticate': 'Basic realm="Service"'
-    });
-  });
+	it('should expose a status `code`', function () {
+		const error = new OAuth2Error('invalid_client');
 
-  it('should expose a status `code`', function () {
-    var error = new OAuth2Error('invalid_client');
+		error.code.should.be.instanceOf(Number);
+	});
 
-    error.code.should.be.instanceOf(Number);
-  });
+	it('should expose the `error`', function () {
+		const error = new OAuth2Error('invalid_client');
 
-  it('should expose the `error`', function () {
-    var error = new OAuth2Error('invalid_client');
+		error.error.should.equal('invalid_client');
+	});
 
-    error.error.should.equal('invalid_client');
-  });
+	it('should expose the `error_description`', function () {
+		const error = new OAuth2Error('invalid_client', 'The access token was not found');
 
-  it('should expose the `error_description`', function () {
-    var error = new OAuth2Error('invalid_client', 'The access token was not found');
+		error.error_description.should.equal('The access token was not found');
+	});
 
-    error.error_description.should.equal('The access token was not found');
-  });
+	it('should expose the `stack` of a previous error', function () {
+		const error = new OAuth2Error('invalid_request', 'The access token was not found', new Error());
 
-  it('should expose the `stack` of a previous error', function () {
-    var error = new OAuth2Error('invalid_request', 'The access token was not found', new Error());
+		error.stack.should.not.match(/^OAuth2Error/);
+		error.stack.should.match(/^Error/);
+	});
 
-    error.stack.should.not.match(/^OAuth2Error/);
-    error.stack.should.match(/^Error/);
-  });
+	it('should expose the `message` of a previous error', function () {
+		const error = new OAuth2Error('invalid_request', 'The access token was not found', new Error('foo'));
 
-  it('should expose the `message` of a previous error', function () {
-    var error = new OAuth2Error('invalid_request', 'The access token was not found', new Error('foo'));
-
-    error.message.should.equal('foo');
-  });
+		error.message.should.equal('foo');
+	});
 
 
-  it('should expose the `mfa_token` when passed in mfa_required', function () {
-      var error = new OAuth2Error('mfa_required', 'mfatokenhere');
+	it('should expose the `mfa_token` when passed in mfa_required', function () {
+		const error = new OAuth2Error('mfa_required', 'mfatokenhere');
 
-      error.mfa_token.should.equal('mfatokenhere');
-  });
+		error.mfa_token.should.equal('mfatokenhere');
+	});
 
-  it('should set the message correctly for mfa_required', function () {
-      var error = new OAuth2Error('mfa_required', 'mfatokenhere');
+	it('should set the message correctly for mfa_required', function () {
+		const error = new OAuth2Error('mfa_required', 'mfatokenhere');
 
-      error.error_description.should.equal('Multi-factor authentication required');
-  });
+		error.error_description.should.equal('Multi-factor authentication required');
+	});
 
-  it('should set the code correctly for mfa_required', function () {
-      var error = new OAuth2Error('mfa_required', 'mfatokenhere');
+	it('should set the code correctly for mfa_required', function () {
+		const error = new OAuth2Error('mfa_required', 'mfatokenhere');
 
-      error.code.should.equal(403);
-  });
+		error.code.should.equal(403);
+	});
 
-  it('should expose the right status `code` for rate_limit_exceeded', function () {
-    var error = new OAuth2Error('rate_limit_exceeded');
+	it('should expose the right status `code` for rate_limit_exceeded', function () {
+		const error = new OAuth2Error('rate_limit_exceeded');
 
-    error.code.should.equal(429);
-  });
+		error.code.should.equal(429);
+	});
 
-  it('should expose the right status `code` for demo_read_only', function () {
-    var error = new OAuth2Error('demo_read_only');
+	it('should expose the right status `code` for demo_read_only', function () {
+		const error = new OAuth2Error('demo_read_only');
 
-    error.code.should.equal(403);
-  });
+		error.code.should.equal(403);
+	});
 });

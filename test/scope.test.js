@@ -13,71 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
-var express = require('express'),
-  bodyParser = require('body-parser'),
-  request = require('supertest'),
-  should = require('should');
+const express = require('express'),
+	bodyParser = require('body-parser'),
+	request = require('supertest');
 
-var oauth2server = require('../');
+const oauth2server = require('../');
 
-var bootstrap = function (scope) {
-  var app = express();
+function bootstrap(scope) {
+	const app = express();
 
-  app.oauth = oauth2server({
-    model: {
-      getAccessToken: function (token, callback) {
-        var expires = new Date(Date.now() * 2);
+	app.oauth = oauth2server({
+		model: {
+			getAccessToken: function (token, callback) {
+				const expires = new Date(Date.now() * 2);
 
-        callback(false, { expires: expires });
-      },
-      authoriseScope: function (accessToken, scope, cb) {
-        cb(false, 'my-scope' !== scope);
-      }
-    }
-  });
+				callback(false, { expires: expires });
+			},
+			authoriseScope: function (accessToken, scope, cb) {
+				cb(false, 'my-scope' !== scope);
+			}
+		}
+	});
 
-  app.use(bodyParser());
+	app.use(bodyParser());
 
-  app.get('/', app.oauth.authorise({ scope: scope }), app.oauth.scope(scope), function (req, res) {
-    res.send('nightworld');
-  });
+	app.get('/', app.oauth.authorise({ scope: scope }), app.oauth.scope(scope), function (req, res) {
+		res.send('nightworld');
+	});
 
-  app.use(app.oauth.errorHandler());
+	app.use(app.oauth.errorHandler());
 
-  return app;
-};
+	return app;
+}
 
 describe('Scope', function () {
 
-  it('should not allow if not authorized', function (done) {
-    var app = bootstrap('foobar');
+	it('should not allow if not authorized', function (done) {
+		const app = bootstrap('foobar');
 
-    app.get('/unauthorised', app.oauth.scope('foobar'), function (req, res) {
-      res.send('nightworld');
-    });
+		app.get('/unauthorised', app.oauth.scope('foobar'), function (req, res) {
+			res.send('nightworld');
+		});
 
-    app.use(app.oauth.errorHandler());
+		app.use(app.oauth.errorHandler());
 
-    request(app)
-      .get('/unauthorised')
-      .expect(400, /invalid_request/, done);
-  });
+		request(app)
+			.get('/unauthorised')
+			.expect(400, /invalid_request/, done);
+	});
 
-  it('should not allow if scope is invalid', function (done) {
-    var app = bootstrap('foobar');
+	it('should not allow if scope is invalid', function (done) {
+		const app = bootstrap('foobar');
 
-    request(app)
-      .get('/?access_token=thom')
-      .expect(400, /invalid_scope/, done);
-  });
+		request(app)
+			.get('/?access_token=thom')
+			.expect(400, /invalid_scope/, done);
+	});
 
-  it('should allow if scope is valid', function (done) {
-    var app = bootstrap('my-scope');
+	it('should allow if scope is valid', function (done) {
+		const app = bootstrap('my-scope');
 
-    request(app)
-      .get('/?access_token=thom')
-      .expect(200, /nightworld/, done);
-  });
+		request(app)
+			.get('/?access_token=thom')
+			.expect(200, /nightworld/, done);
+	});
 
 });

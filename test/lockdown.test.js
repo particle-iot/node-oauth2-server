@@ -13,124 +13,126 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+'use strict';
 
-var express = require('express'),
-  bodyParser = require('body-parser'),
-  request = require('supertest'),
-  should = require('should');
+const express = require('express'),
+	bodyParser = require('body-parser'),
+	request = require('supertest');
 
-var oauth2server = require('../');
-var Authorise = require('../lib/authorise');
+const oauth2server = require('../');
+const Authorise = require('../lib/authorise');
 
-var bootstrap = function (oauthConfig) {
-  var app = express();
-  app.oauth = oauth2server(oauthConfig || {
-      model: {}
-    });
+function bootstrap(oauthConfig) {
+	const app = express();
+	app.oauth = oauth2server(oauthConfig || {
+		model: {}
+	});
 
-  app.use(bodyParser());
+	app.use(bodyParser());
 
-  app.all('/oauth/token', app.oauth.grant);
+	app.all('/oauth/token', app.oauth.grant);
 
-  app.all('/private', function (req, res, next) {
-    res.send('Hello');
-  });
+	app.all('/private', function (req, res, _next) {
+		res.send('Hello');
+	});
 
-  app.all('/public', app.oauth.bypass, function (req, res, next) {
-    res.send('Hello');
-  });
+	app.all('/public', app.oauth.bypass, function (req, res, _next) {
+		res.send('Hello');
+	});
 
 
-  app.oauth.lockdown(app);
+	app.oauth.lockdown(app);
 
-  app.use(app.oauth.errorHandler());
+	app.use(app.oauth.errorHandler());
 
-  return app;
-};
+	return app;
+}
 
 describe('Lockdown pattern', function() {
 
-  it('should substitute grant', function (done) {
-    var app = bootstrap();
+	it('should substitute grant', function (done) {
+		const app = bootstrap();
 
-    request(app)
-      .get('/oauth/token')
-      .expect(400, /method must be POST/i, done);
-  });
+		request(app)
+			.get('/oauth/token')
+			.expect(400, /method must be POST/i, done);
+	});
 
-  it('should insert authorise by default', function (done) {
-    var app = bootstrap();
+	it('should insert authorise by default', function (done) {
+		const app = bootstrap();
 
-    request(app)
-      .get('/private')
-      .expect(400, /access token was not found/i, done);
-  });
+		request(app)
+			.get('/private')
+			.expect(400, /access token was not found/i, done);
+	});
 
-  it('should pass valid request through authorise', function (done) {
-    var app = bootstrap({
-      model: {
-        getAccessToken: function (token, callback) {
-          callback(token !== 'thom', { access_token: token, expires: null });
-        }
-      }
-    });
+	it('should pass valid request through authorise', function (done) {
+		const app = bootstrap({
+			model: {
+				getAccessToken: function (token, callback) {
+					callback(token !== 'thom', { access_token: token, expires: null });
+				}
+			}
+		});
 
-    request(app)
-      .get('/private?access_token=thom')
-      .expect(200, /hello/i, done);
-  });
+		request(app)
+			.get('/private?access_token=thom')
+			.expect(200, /hello/i, done);
+	});
 
-  it('should correctly bypass', function (done) {
-    var app = bootstrap();
+	it('should correctly bypass', function (done) {
+		const app = bootstrap();
 
-    request(app)
-      .get('/public')
-      .expect(200, /hello/i, done);
-  });
+		request(app)
+			.get('/public')
+			.expect(200, /hello/i, done);
+	});
 
-  describe('in express 3', function () {
-    var app, privateAction, publicAction;
+	describe('in express 3', function () {
+		let app, privateAction, publicAction;
 
-    beforeEach(function () {
-      privateAction = function () {};
-      publicAction = function () {};
+		beforeEach(function () {
+			privateAction = function () {};
+			publicAction = function () {};
 
-      // mock express 3 app
-      app = {
-        routes: { get: [] }
-      };
+			// mock express 3 app
+			app = {
+				routes: { get: [] }
+			};
 
-      app.oauth = oauth2server({ model: {} });
-      app.routes.get.push({ callbacks: [ privateAction ] });
-      app.routes.get.push({ callbacks: [ app.oauth.bypass, publicAction ] });
-      app.oauth.lockdown(app);
-    });
+			app.oauth = oauth2server({ model: {} });
+			app.routes.get.push({ callbacks: [privateAction] });
+			app.routes.get.push({ callbacks: [app.oauth.bypass, publicAction] });
+			app.oauth.lockdown(app);
+		});
 
-    function mockRequest(authoriseFactory) {
-      var req = {
-        get: function () {},
-        query: { access_token: { expires: null } },
-        headers: {},
-        body: {}
-      };
-      var next = function () {};
+		function mockRequest(authoriseFactory) {
+			const req = {
+				get: function () {},
+				query: { access_token: { expires: null } },
+				headers: {},
+				body: {}
+			};
+			const next = () => {};
 
-      app.oauth.model.getAccessToken = function (t, c) { c(null, t); };
+			app.oauth.model.getAccessToken = function (t, c) {
+				c(null, t);
+			};
 
-      return authoriseFactory(req, null, next);
-    }
+			return authoriseFactory(req, null, next);
+		}
 
-    it('adds authorise to non-bypassed routes', function () {
-      var authorise = mockRequest(app.routes.get[0].callbacks[0]);
-      authorise.should.be.an.instanceOf(Authorise);
-    });
+		it('adds authorise to non-bypassed routes', function () {
+			const authorise = mockRequest(app.routes.get[0].callbacks[0]);
+			authorise.should.be.an.instanceOf(Authorise);
+		});
 
-    it('runs non-bypassed routes after authorise', function () {
-      app.routes.get[0].callbacks[1].should.equal(privateAction);
-    });
+		it('runs non-bypassed routes after authorise', function () {
+			app.routes.get[0].callbacks[1].should.equal(privateAction);
+		});
 
-    it('removes oauth.bypass from bypassed routes', function () {
-      app.routes.get[1].callbacks[0].should.equal(publicAction);
-    });
-  });
+		it('removes oauth.bypass from bypassed routes', function () {
+			app.routes.get[1].callbacks[0].should.equal(publicAction);
+		});
+	});
 });

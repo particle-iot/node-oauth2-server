@@ -17,15 +17,21 @@
     }
   ],
   "main": "lib/oauth2server.js",
+  "scripts": {
+    "lint": "eslint",
+    "test": "mocha --exit --recursive '**/*.test.js'"
+  },
   "dependencies": {
     "basic-auth": "~0.0.1"
   },
   "devDependencies": {
-    "body-parser": "^1.18.2",
+    "body-parser": "^1.20.4",
+    "eslint": "^9.39.3",
+    "eslint-config-particle": "^3.0.3",
     "expect": "^30.2.0",
     "express": "^4.18.2",
     "mocha": "^7.2.0",
-    "should": "~4.0.4",
+    "should": "~13.2.3",
     "supertest": "^7.2.2"
   },
   "licenses": [
@@ -35,10 +41,7 @@
     }
   ],
   "engines": {
-    "node": ">=0.8"
-  },
-  "scripts": {
-    "test": "mocha --exit --recursive '**/*.test.js'"
+    "node": ">=22"
   },
   "repository": {
     "type": "git",
