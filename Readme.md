@@ -1,4 +1,5 @@
-# Node OAuth2 Server [![Build Status](https://travis-ci.org/spark/node-oauth2-server.png)](https://travis-ci.org/spark/node-oauth2-server)
+# DEPRECATED Node OAuth2 Server [![Build Status](https://travis-ci.org/spark/node-oauth2-server.png)](https://travis-ci.org/spark/node-oauth2-server)
+## THE CODE FOR THIS REPO HAS BEEN INTEGRATED DIRECTLY INTO OUR API AND WE WILL NO LONGER UPDATE THIS
 
 Complete, compliant and well tested module for implementing an OAuth2 Server/Provider with [express](http://expressjs.com/) in [node.js](http://nodejs.org/)
 
